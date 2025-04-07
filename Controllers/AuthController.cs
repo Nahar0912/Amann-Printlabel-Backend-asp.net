@@ -1,13 +1,13 @@
 ﻿using Backend.DTOs;
 using Backend.Services;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace Backend.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("auth")]
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;
@@ -23,21 +23,51 @@ namespace Backend.Controllers
         public async Task<IActionResult> Login([FromBody] UserDto userDto)
         {
             var user = await _userService.FindByEmail(userDto.Email);
-
-            if (user == null || !await _userService.ValidatePassword(userDto.PasswordHash, user.PasswordHash))
+            if (user == null)
             {
-                return BadRequest("Invalid credentials.");
+                return BadRequest(new { message = "Invalid User credentials" });
             }
 
-            var token = await _authService.GenerateToken(user);
-            return Ok(new { Token = token });
+            var isPasswordValid = await _userService.ValidatePassword(userDto.PasswordHash, user.PasswordHash);
+            if (!isPasswordValid)
+            {
+                return BadRequest(new { message = "Invalid Password credentials" });
+            }
+
+            var token = _authService.GenerateToken(user);
+
+            // Set the JWT in an HTTP-only cookie
+            Response.Cookies.Append("access_token", token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                // MaxAge = TimeSpan.FromHours(1)
+            });
+
+            return Ok(new { message = "Login successful" });
         }
 
         [HttpPost("logout")]
         public IActionResult Logout()
         {
             Response.Cookies.Delete("access_token");
-            return Ok(new { Message = "Logged out successfully" });
+            return Ok(new { message = "Logged out successfully" });
+        }
+
+        [HttpGet("check")]
+        [Authorize]
+        public IActionResult CheckAuth()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var email = User.FindFirstValue(ClaimTypes.Email);
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(new { message = "User is not authenticated" });
+            }
+
+            return Ok(new { message = "User is authenticated", userId, email });
         }
     }
 }

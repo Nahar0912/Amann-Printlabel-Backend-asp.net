@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -7,17 +7,33 @@ using Backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add controllers
 builder.Services.AddControllers();
 
-// Add DbContext for SQL Server
+// Configure EF Core with SQL Server
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Add JWT Authentication
+// Register custom services
+builder.Services.AddScoped<LabelService>();
+builder.Services.AddScoped<ArticleService>();
+builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<AuthService>();
+
+// JWT Authentication config
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                // Read token from cookie named "access_token"
+                context.Token = context.Request.Cookies["access_token"];
+                return Task.CompletedTask;
+            }
+        };
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -31,23 +47,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// Register custom services
-builder.Services.AddScoped<LabelService>();
-builder.Services.AddScoped<ArticleService>();
-builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<AuthService>();
-
 builder.Services.AddAuthorization();
+
+// Swagger for API documentation
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// CORS for React Vite frontend
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://localhost:5173") // React Vite default port
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials(); // important for cookie-based auth
     });
 });
 
@@ -55,7 +69,7 @@ builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
-// Configure middleware
+// Middleware setup
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -72,6 +86,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// Apply CORS middleware
 app.UseCors();
 
 app.UseAuthentication();

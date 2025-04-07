@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Backend.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("articles")]
     [ApiController]
     public class ArticleController : ControllerBase
     {
