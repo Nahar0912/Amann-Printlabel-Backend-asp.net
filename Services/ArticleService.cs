@@ -60,8 +60,7 @@ namespace Backend.Services
         // Get article by ID
         public async Task<ArticleEntity> FindOneByIdAsync(int id)
         {
-            var article = await _context.Articles
-                .FirstOrDefaultAsync(a => a.Id == id);
+            var article = await _context.Articles.FirstOrDefaultAsync(a => a.Id == id);
 
             if (article == null)
             {

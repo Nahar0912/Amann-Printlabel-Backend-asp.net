@@ -1,9 +1,7 @@
-﻿using Backend.Data;
-using Backend.DTOs;
-using Backend.Models;
+﻿using Backend.DTOs;
+using Backend.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
-using System.Text;
+using Backend.Data;
 
 namespace Backend.Services
 {
@@ -16,81 +14,104 @@ namespace Backend.Services
             _context = context;
         }
 
-        public async Task<List<UserEntity>> GetAllAsync()
+        // Health check method
+        public string GetIndex()
         {
-            return await _context.Users.ToListAsync();
+            return "User Service is running";
         }
 
-        public async Task<UserEntity?> GetByIdAsync(int id)
+        // Get all users
+        public async Task<IQueryable<UserEntity>> FindAllAsync()
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            return _context.Users.AsQueryable();
         }
 
-        public async Task<UserEntity> FindByEmail(string email)
+        // Get a user by ID
+        public async Task<UserEntity> FindOneByIdAsync(int id)
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-        }
-
-        public async Task<bool> ValidatePassword(string plainPassword, string hashedPassword)
-        {
-            return hashedPassword == HashPassword(plainPassword);
-        }
-
-        private string HashPassword(string password)
-        {
-            using (var hmac = new HMACSHA512())
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
             {
-                var hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-                return Convert.ToBase64String(hashBytes);
+                throw new NotFoundException($"User with ID {id} not found");
             }
+            return user;
         }
 
-        public async Task<UserEntity> CreateUser(UserDto userDto)
+        // Find a user by email (used for login)
+        public async Task<UserEntity> FindByEmailAsync(string email)
         {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+            {
+                throw new NotFoundException("User not found");
+            }
+            return user;
+        }
+
+        // Validate password by comparing plain text password with hashed password
+        public bool ValidatePassword(string plainPassword, string hashedPassword)
+        {
+            return BCrypt.Net.BCrypt.Verify(plainPassword, hashedPassword);
+        }
+
+        // Create a new user
+        public async Task<UserEntity> CreateAsync(UserDto userDto)
+        {
+            var salt = BCrypt.Net.BCrypt.GenerateSalt(10);
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(userDto.PasswordHash, salt);
+
             var user = new UserEntity
             {
                 Username = userDto.Username,
                 Email = userDto.Email,
-                PasswordHash = HashPassword(userDto.PasswordHash),
+                PasswordHash = hashedPassword,
                 Role = userDto.Role,
+                isActive = userDto.isActive ?? true,  // Default to true if not provided
                 Created = DateTime.Now,
-                Modified = DateTime.Now,
-                IsActive = userDto.IsActive
+                Modified = DateTime.Now
             };
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
-
             return user;
         }
 
-        public async Task<UserEntity?> UpdateUser(int id, UserDto userDto)
+        // Update a user by ID
+        public async Task<UserEntity> UpdateAsync(int id, UpdateUserDto userDto)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return null;
+            var user = await FindOneByIdAsync(id);
 
             user.Username = userDto.Username ?? user.Username;
             user.Email = userDto.Email ?? user.Email;
-            if (!string.IsNullOrEmpty(userDto.PasswordHash))
-            {
-                user.PasswordHash = HashPassword(userDto.PasswordHash);
-            }
             user.Role = userDto.Role ?? user.Role;
-            user.IsActive = userDto.IsActive;
+            user.isActive = userDto.isActive ?? user.isActive;
             user.Modified = DateTime.Now;
 
+            // If password is provided, hash it and update
+            if (!string.IsNullOrEmpty(userDto.PasswordHash))
+            {
+                var salt = BCrypt.Net.BCrypt.GenerateSalt(10);
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(userDto.PasswordHash, salt);
+            }
+
+            _context.Users.Update(user);
             await _context.SaveChangesAsync();
+
             return user;
         }
 
-        public async Task<bool> DeleteUser(int id)
+        // Delete a user by ID
+        public async Task DeleteAsync(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return false;
-
+            var user = await FindOneByIdAsync(id);
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
-            return true;
         }
+    }
+
+    // Custom exception class for "Not Found"
+    public class NotFoundException : Exception
+    {
+        public NotFoundException(string message) : base(message) { }
     }
 }

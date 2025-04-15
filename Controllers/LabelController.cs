@@ -1,5 +1,7 @@
 ﻿using Backend.DTOs;
+using Backend.Entities;
 using Backend.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.Controllers
@@ -8,52 +10,65 @@ namespace Backend.Controllers
     [ApiController]
     public class LabelController : ControllerBase
     {
-        private readonly LabelService _service;
+        private readonly LabelService _labelService;
 
-        public LabelController(LabelService service)
+        public LabelController(LabelService labelService)
         {
-            _service = service;
+            _labelService = labelService;
         }
 
-        [HttpGet("index")]
-        public IActionResult Index() => Ok("Label Service is running");
-
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
+        // Create a new label
+        [HttpPost("add")]
+        public async Task<ActionResult<LabelEntity>> Create([FromBody] LabelDto labelDto)
         {
-            var labels = await _service.GetAllAsync();
-            return Ok(labels);
-        }
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
-        {
-            var label = await _service.GetByIdAsync(id);
-            if (label == null) return NotFound();
+            var label = await _labelService.CreateLabelAsync(labelDto);
             return Ok(label);
         }
 
-        [HttpPost("add")]
-        public async Task<IActionResult> Create(LabelDto dto)
+        // Get all labels
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<LabelEntity>>> GetAll()
         {
-            var label = await _service.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = label.ID }, label);
+            var labels = await _labelService.GetAllLabelsAsync();
+            return Ok(labels);
         }
 
-        [HttpPut("update/{id}")]
-        public async Task<IActionResult> Update(int id, UpdateLabelDto dto)
+        // Get label by ID
+        [HttpGet("{id}")]
+        public async Task<ActionResult<LabelEntity>> GetById(int id)
         {
-            var updated = await _service.UpdateAsync(id, dto);
-            if (updated == null) return NotFound();
+            var label = await _labelService.GetLabelByIdAsync(id);
+            if (label == null)
+                return NotFound();
+
+            return Ok(label);
+        }
+
+        // Update a label
+        //[Authorize]
+        [HttpPut("update/{id}")]
+        public async Task<ActionResult<LabelEntity>> Update(int id, [FromBody] UpdateLabelDto dto)
+        {
+            var updated = await _labelService.UpdateLabelAsync(id, dto);
+            if (updated == null)
+                return NotFound();
+
             return Ok(updated);
         }
 
+        // Delete a label
+        //[Authorize]
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var deleted = await _service.DeleteAsync(id);
-            if (!deleted) return NotFound();
-            return NoContent();
+            var success = await _labelService.DeleteLabelAsync(id);
+            if (!success)
+                return NotFound();
+
+            return Ok(new { message = "Deleted successfully" });
         }
     }
 }

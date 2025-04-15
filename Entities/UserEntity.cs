@@ -1,7 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
-namespace Backend.Models
+namespace Backend.Entities
 {
     [Table("UserInfo", Schema = "dbo")]
     public class UserEntity
@@ -9,22 +10,25 @@ namespace Backend.Models
         [Key]
         public int Id { get; set; }
 
-        [Required, MaxLength(200)]
-        public string Username { get; set; }
-
-        [Required, MaxLength(200)]
-        [EmailAddress]
-        public string Email { get; set; }
-
-        [Required, MaxLength(200)]
-        public string PasswordHash { get; set; }
+        [MaxLength(200)]
+        public string? Username { get; set; }
 
         [MaxLength(200)]
-        public string Role { get; set; }
+        public required string Email { get; set; }
 
-        public DateTime Created { get; set; }
-        public DateTime Modified { get; set; }
+        [Required,JsonIgnore, MaxLength(200)]
+        public string PasswordHash { get; set; }
 
-        public bool IsActive { get; set; }
+        [Required, MaxLength(200)]
+        public string? Role { get; set; }
+        [JsonIgnore]
+        public DateTime Created { get; set; } = DateTime.UtcNow;
+
+        // Set Modified date to be updated when the entity is modified
+        [JsonIgnore]
+        public DateTime Modified { get; set; } = DateTime.UtcNow;
+
+        public bool? isActive { get; set; }
+
     }
 }

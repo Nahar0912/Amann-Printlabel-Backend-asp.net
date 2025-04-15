@@ -17,13 +17,6 @@ namespace Backend.Controllers
             _articleService = articleService;
         }
 
-        // Health check endpoint
-        [HttpGet("index")]
-        public string GetIndex()
-        {
-            return _articleService.GetIndex();
-        }
-
         // Create a new article
         [HttpPost("add")]
         public async Task<ActionResult<ArticleEntity>> Create([FromBody] ArticleDto articleDto)
