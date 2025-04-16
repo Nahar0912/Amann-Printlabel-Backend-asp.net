@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
 
 namespace Backend.Entities
 {
@@ -25,8 +24,7 @@ namespace Backend.Entities
         [MaxLength(200)]
         public string ARTICLE_NO { get; set; }
 
-        //[JsonConverter(typeof(JsonDateTimeConverter))]
-        public DateTime? DATE { get; set; } = DateTime.Now;
+        public DateTime DATE { get; set; } = DateTime.Now;
 
         [MaxLength(100)]
         public string CARTON_INSIDE_QUANTITY { get; set; }
@@ -58,10 +56,8 @@ namespace Backend.Entities
         [MaxLength(100)]
         public string COMPETETOR_COLOR_CODE { get; set; }
 
-        //[JsonConverter(typeof(JsonDateTimeConverter))]
-        public DateTime? CREATED_AT { get; set; } = DateTime.UtcNow;
-        //[JsonConverter(typeof(JsonDateTimeConverter))]
-        public DateTime? UPDATED_AT { get; set; } = DateTime.UtcNow;
+        public DateTime CREATED_AT { get; set; } = DateTime.Now;
+        public DateTime UPDATED_AT { get; set; } = DateTime.Now;
 
     }
 }

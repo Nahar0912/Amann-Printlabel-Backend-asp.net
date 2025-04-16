@@ -2,7 +2,6 @@
 using System.Security.Claims;
 using System.Text;
 using Backend.Entities;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 public class AuthService

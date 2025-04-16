@@ -1,8 +1,8 @@
 ﻿using Backend.DTOs;
 using Backend.Entities;
 using Backend.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 
 namespace Backend.Controllers
 {
@@ -50,6 +50,7 @@ namespace Backend.Controllers
         }
 
         // Update an article
+        [Authorize]
         [HttpPut("update/{id}")]
         public async Task<ActionResult<ArticleEntity>> Update(int id, [FromBody] UpdateArticleDto updateArticleDto)
         {
@@ -58,6 +59,7 @@ namespace Backend.Controllers
         }
 
         // Delete an article
+        [Authorize]
         [HttpDelete("delete/{id}")]
         public async Task<ActionResult> Delete(int id)
         {

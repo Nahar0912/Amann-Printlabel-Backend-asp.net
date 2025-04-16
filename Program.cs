@@ -64,7 +64,6 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = null;  // Keeps original casing
-        //options.JsonSerializerOptions.Converters.Add(new JsonDateTimeConverter());
     });
 
 // CORS for React Vite frontend

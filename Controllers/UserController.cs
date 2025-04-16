@@ -39,7 +39,7 @@ namespace Backend.Controllers
         }
 
         [HttpPut("update/{id}")]
-        //[Authorize]
+        [Authorize]
         public async Task<ActionResult<UserEntity>> Update(int id, [FromBody] UpdateUserDto userDto)
         {
             var user = await _userService.UpdateAsync(id, userDto);
@@ -47,7 +47,7 @@ namespace Backend.Controllers
         }
 
         [HttpDelete("delete/{id}")]
-        //[Authorize]
+        [Authorize]
         public async Task<IActionResult> Delete(int id)
         {
             await _userService.DeleteAsync(id);

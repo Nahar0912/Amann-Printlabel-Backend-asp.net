@@ -2,7 +2,6 @@
 using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Backend.DTOs;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 [Route("auth")]
 [ApiController]
@@ -46,6 +45,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("check")]
+    [Authorize]
     public IActionResult CheckAuth()
     {
         return Ok(new { message = "User is authenticated" });

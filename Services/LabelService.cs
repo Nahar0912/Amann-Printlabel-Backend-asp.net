@@ -99,6 +99,7 @@ namespace Backend.Services
             label.PRINT_QUANTITY_FOR_CONE_ROUND_STICKER = dto.PRINT_QUANTITY_FOR_CONE_ROUND_STICKER ?? label.PRINT_QUANTITY_FOR_CONE_ROUND_STICKER;
             label.AMANN_COLOR_CODE = dto.AMANN_COLOR_CODE ?? label.AMANN_COLOR_CODE;
             label.COMPETETOR_COLOR_CODE = dto.COMPETETOR_COLOR_CODE ?? label.COMPETETOR_COLOR_CODE;
+            label.UPDATED_AT = DateTime.Now; // Update the modified date
 
             // Sync article
             var article = await _context.Articles.FirstOrDefaultAsync(a => a.Article_No == dto.ARTICLE_NO);

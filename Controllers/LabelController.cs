@@ -48,7 +48,7 @@ namespace Backend.Controllers
         }
 
         // Update a label
-        //[Authorize]
+        [Authorize]
         [HttpPut("update/{id}")]
         public async Task<ActionResult<LabelEntity>> Update(int id, [FromBody] UpdateLabelDto dto)
         {
@@ -60,7 +60,7 @@ namespace Backend.Controllers
         }
 
         // Delete a label
-        //[Authorize]
+        [Authorize]
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
