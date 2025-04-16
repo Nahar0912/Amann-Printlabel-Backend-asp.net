@@ -21,10 +21,10 @@ namespace Backend.Entities
 
         [Required, MaxLength(200)]
         public string? Role { get; set; }
-        //[JsonIgnore]
+        [JsonIgnore]
         public DateTime Created { get; set; } = DateTime.Now;
 
-        //[JsonIgnore]
+        [JsonIgnore]
         public DateTime Modified { get; set; } = DateTime.Now;
 
         public bool? isActive { get; set; }
