@@ -5,14 +5,9 @@ using Backend.Entities;
 
 namespace Backend.Services
 {
-    public class ArticleService
+    public class ArticleService(AppDbContext context)
     {
-        private readonly AppDbContext _context;
-
-        public ArticleService(AppDbContext context)
-        {
-            _context = context;
-        }
+        private readonly AppDbContext _context = context;
 
         // Health check method
         public string GetIndex()
@@ -29,7 +24,9 @@ namespace Backend.Services
                 Tex_No = articleDto.Tex_No,
                 Length = articleDto.Length,
                 Cone_Round_Tex = articleDto.Cone_Round_Tex,
-                No_of_Cones_inside_the_Carton = articleDto.No_of_Cones_inside_the_Carton
+                No_of_Cones_inside_the_Carton = articleDto.No_of_Cones_inside_the_Carton,
+                Created = DateTime.Now,
+                Modified = DateTime.Now
             };
 
             _context.Articles.Add(article);
@@ -38,7 +35,7 @@ namespace Backend.Services
         }
 
         // Get all articles
-        public async Task<IQueryable<ArticleEntity>> FindAllAsync()
+        public IQueryable<ArticleEntity> FindAll()
         {
             return _context.Articles;
         }
@@ -89,6 +86,9 @@ namespace Backend.Services
 
             if (updateArticleDto.No_of_Cones_inside_the_Carton != null)
                 article.No_of_Cones_inside_the_Carton = updateArticleDto.No_of_Cones_inside_the_Carton;
+
+            if (updateArticleDto.Modified != null)
+                article.Modified = updateArticleDto.Modified;
 
             await _context.SaveChangesAsync();
 

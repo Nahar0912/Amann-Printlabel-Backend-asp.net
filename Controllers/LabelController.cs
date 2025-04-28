@@ -8,14 +8,9 @@ namespace Backend.Controllers
 {
     [Route("labels")]
     [ApiController]
-    public class LabelController : ControllerBase
+    public class LabelController(LabelService labelService) : ControllerBase
     {
-        private readonly LabelService _labelService;
-
-        public LabelController(LabelService labelService)
-        {
-            _labelService = labelService;
-        }
+        private readonly LabelService _labelService = labelService;
 
         // Create a new label
         [HttpPost("add")]

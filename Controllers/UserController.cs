@@ -8,20 +8,15 @@ namespace Backend.Controllers
 {
     [Route("users")]
     [ApiController]
-    public class UserController : ControllerBase
+    public class UserController(UserService userService) : ControllerBase
     {
-        private readonly UserService _userService;
-
-        public UserController(UserService userService)
-        {
-            _userService = userService;
-        }
+        private readonly UserService _userService = userService;
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserEntity>>> GetAll()
+        public Task<ActionResult<IEnumerable<UserEntity>>> GetAll()
         {
-            var users = await _userService.FindAllAsync();
-            return Ok(users);
+            var users = _userService.FindAll();
+            return Task.FromResult<ActionResult<IEnumerable<UserEntity>>>(Ok(users));
         }
 
         [HttpGet("{id}")]

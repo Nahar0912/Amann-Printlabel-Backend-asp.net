@@ -8,14 +8,9 @@ namespace Backend.Controllers
 {
     [Route("articles")]
     [ApiController]
-    public class ArticleController : ControllerBase
+    public class ArticleController(ArticleService articleService) : ControllerBase
     {
-        private readonly ArticleService _articleService;
-
-        public ArticleController(ArticleService articleService)
-        {
-            _articleService = articleService;
-        }
+        private readonly ArticleService _articleService = articleService;
 
         // Create a new article
         [HttpPost("add")]
@@ -27,10 +22,10 @@ namespace Backend.Controllers
 
         // Get all articles
         [HttpGet]
-        public async Task<ActionResult> FindAll()
+        public Task<ActionResult> FindAll()
         {
-            var articles = await _articleService.FindAllAsync();
-            return Ok(articles);
+            var articles = _articleService.FindAll();
+            return Task.FromResult<ActionResult>(Ok(articles));
         }
 
         // Get article by ARTICLE_NO

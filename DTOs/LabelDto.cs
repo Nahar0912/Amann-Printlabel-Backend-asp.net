@@ -5,9 +5,9 @@ namespace Backend.DTOs
     public class LabelDto
     {
         [Required]
-        public string BAR_CODE { get; set; }
+        public required string BAR_CODE { get; set; }
         [Required]
-        public string ORDER_QUANTITY { get; set; }
+        public required string ORDER_QUANTITY { get; set; }
         public string? BATCH_LOT_NO { get; set; }
         public string? COLOR_CODE { get; set; }
         public string? ARTICLE_NO { get; set; }

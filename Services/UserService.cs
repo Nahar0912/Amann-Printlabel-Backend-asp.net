@@ -5,14 +5,9 @@ using Backend.Data;
 
 namespace Backend.Services
 {
-    public class UserService
+    public class UserService(AppDbContext context)
     {
-        private readonly AppDbContext _context;
-
-        public UserService(AppDbContext context)
-        {
-            _context = context;
-        }
+        private readonly AppDbContext _context = context;
 
         // Health check method
         public string GetIndex()
@@ -21,7 +16,7 @@ namespace Backend.Services
         }
 
         // Get all users
-        public async Task<IQueryable<UserEntity>> FindAllAsync()
+        public IQueryable<UserEntity> FindAll()
         {
             return _context.Users.AsQueryable();
         }
@@ -66,7 +61,7 @@ namespace Backend.Services
                 Email = userDto.Email,
                 PasswordHash = hashedPassword,
                 Role = userDto.Role,
-                isActive = userDto.isActive ?? true,  // Default to true if not provided
+                isActive = userDto.isActive ?? true,  
                 Created = DateTime.Now,
                 Modified = DateTime.Now
             };
@@ -110,8 +105,7 @@ namespace Backend.Services
     }
 
     // Custom exception class for "Not Found"
-    public class NotFoundException : Exception
+    public class NotFoundException(string message) : Exception(message)
     {
-        public NotFoundException(string message) : base(message) { }
     }
 }

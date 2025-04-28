@@ -5,56 +5,61 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Services
 {
-    public class LabelService
+    public class LabelService(AppDbContext context)
     {
-        private readonly AppDbContext _context;
-
-        public LabelService(AppDbContext context)
-        {
-            _context = context;
-        }
+        private readonly AppDbContext _context = context;
 
         // Create label
         public async Task<LabelEntity> CreateLabelAsync(LabelDto dto)
         {
-            // Check for existing article
-            var article = await _context.Articles.FirstOrDefaultAsync(a => a.Article_No == dto.ARTICLE_NO);
+            // Split the barcode
+            string[] parts = dto.BAR_CODE?.Split('-') ?? Array.Empty<string>();
+            // Optional: Validate BAR_CODE length
+            if (dto.BAR_CODE?.Length > 32)
+                throw new ArgumentException("BAR_CODE must not exceed 32 characters.");
 
-            if (article == null)
-            {
-                // If the article doesn't exist, create a new one with default values
-                article = new ArticleEntity
-                {
-                    Article_No = dto.ARTICLE_NO ?? "ART123", // Default article number
-                    Tex_No = dto.TEX_NO ?? "TEX123", // Default Tex No
-                    Length = dto.LENGTH ?? "100", // Default length
-                    Cone_Round_Tex = dto.CONE_ROUND_TEX ?? "CONE123", // Default cone round tex
-                    No_of_Cones_inside_the_Carton = dto.CARTON_INSIDE_QUANTITY ?? "20" // Default carton inside quantity
-                };
-                _context.Articles.Add(article);
-                await _context.SaveChangesAsync();
-            }
+            string articleNo = parts.Length > 0 ? parts[0] : "UNKNOWN";
+            string colorCode = parts.Length > 1 ? parts[1] : "UNKNOWN";
+            string competitorColorCode = parts.Length == 4 ? parts[2] : "UNKNOWN";
+            string batchLotNo = parts.Length == 4 ? parts[3] : parts.Length == 3 ? parts[2] : "UNKNOWN";
 
+            // Look up article info
+            var article = await _context.Articles.FirstOrDefaultAsync(a => a.Article_No == articleNo);
+
+            // Fallback values if article is null
+            int conesPerCarton = Convert.ToInt32(article.No_of_Cones_inside_the_Carton);
+            int quantity = Convert.ToInt32(dto.ORDER_QUANTITY); // Convert ORDER_QUANTITY to int
+
+            // ---- Sticker Calculation Logic ----
+            int fullStickers = quantity / conesPerCarton;
+            int looseQuantity = quantity - (conesPerCarton * fullStickers);
+            string printLooseSticker = looseQuantity > 0 ? "1" : "0";
+            int coneRoundStickerQty = quantity + 9 + fullStickers;
+
+            // ---- Create Label Entity ----
             var label = new LabelEntity
             {
                 BAR_CODE = dto.BAR_CODE,
-                ORDER_QUANTITY = dto.ORDER_QUANTITY,
+                ORDER_QUANTITY = quantity.ToString(),
 
-                // Set default values for other required fields
-                BATCH_LOT_NO = "LT323",  // Default value
-                COLOR_CODE = "BLUE",  // Default value
-                ARTICLE_NO = dto.ARTICLE_NO ?? "ART123",  // Default value if not provided
-                DATE = DateTime.Now,  // Current date
-                CARTON_INSIDE_QUANTITY = dto.CARTON_INSIDE_QUANTITY ?? "20",  // Default value
-                TEX_NO = dto.TEX_NO ?? "TEX123",  // Default value
-                LENGTH = dto.LENGTH ?? "100",  // Default value
-                CONE_ROUND_TEX = dto.CONE_ROUND_TEX ?? "CONE123",  // Default value
-                NO_OF_STICKER_WITH_FULL_BOX = dto.NO_OF_STICKER_WITH_FULL_BOX ?? "5",  // Default value
-                NO_OF_LOOSE_QUANTITY_IN_LAST_STICKER = dto.NO_OF_LOOSE_QUANTITY_IN_LAST_STICKER ?? "10",  // Default value
-                PRINT_QUANTITY_FOR_LOOSE_STICKER = dto.PRINT_QUANTITY_FOR_LOOSE_STICKER ?? "20",  // Default value
-                PRINT_QUANTITY_FOR_CONE_ROUND_STICKER = dto.PRINT_QUANTITY_FOR_CONE_ROUND_STICKER ?? "15",  // Default value
-                AMANN_COLOR_CODE = dto.AMANN_COLOR_CODE ?? "AM123",  // Default value
-                COMPETETOR_COLOR_CODE = dto.COMPETETOR_COLOR_CODE ?? "COMP456",  // Default value
+                ARTICLE_NO = articleNo,
+                COLOR_CODE = colorCode,
+                AMANN_COLOR_CODE = colorCode,
+                COMPETETOR_COLOR_CODE = competitorColorCode,
+                BATCH_LOT_NO = batchLotNo,
+
+                DATE = DateTime.Now,
+
+                CARTON_INSIDE_QUANTITY = conesPerCarton.ToString(),
+                TEX_NO = article?.Tex_No ?? dto.TEX_NO,
+                LENGTH = article?.Length ?? dto.LENGTH,
+                CONE_ROUND_TEX = article?.Cone_Round_Tex ?? dto.CONE_ROUND_TEX,
+
+                // Automatically calculated fields:
+                NO_OF_STICKER_WITH_FULL_BOX = fullStickers.ToString(),
+                NO_OF_LOOSE_QUANTITY_IN_LAST_STICKER = looseQuantity.ToString(),
+                PRINT_QUANTITY_FOR_LOOSE_STICKER = printLooseSticker.ToString(),
+                PRINT_QUANTITY_FOR_CONE_ROUND_STICKER = coneRoundStickerQty.ToString(),
             };
 
             _context.Labels.Add(label);
@@ -99,29 +104,7 @@ namespace Backend.Services
             label.PRINT_QUANTITY_FOR_CONE_ROUND_STICKER = dto.PRINT_QUANTITY_FOR_CONE_ROUND_STICKER ?? label.PRINT_QUANTITY_FOR_CONE_ROUND_STICKER;
             label.AMANN_COLOR_CODE = dto.AMANN_COLOR_CODE ?? label.AMANN_COLOR_CODE;
             label.COMPETETOR_COLOR_CODE = dto.COMPETETOR_COLOR_CODE ?? label.COMPETETOR_COLOR_CODE;
-            label.UPDATED_AT = DateTime.Now; // Update the modified date
-
-            // Sync article
-            var article = await _context.Articles.FirstOrDefaultAsync(a => a.Article_No == dto.ARTICLE_NO);
-            if (article == null)
-            {
-                article = new ArticleEntity
-                {
-                    Article_No = dto.ARTICLE_NO,
-                    Tex_No = dto.TEX_NO,
-                    Length = dto.LENGTH,
-                    Cone_Round_Tex = dto.CONE_ROUND_TEX,
-                    No_of_Cones_inside_the_Carton = dto.CARTON_INSIDE_QUANTITY
-                };
-                _context.Articles.Add(article);
-            }
-            else
-            {
-                article.Tex_No = dto.TEX_NO ?? article.Tex_No;
-                article.Length = dto.LENGTH ?? article.Length;
-                article.Cone_Round_Tex = dto.CONE_ROUND_TEX ?? article.Cone_Round_Tex;
-                article.No_of_Cones_inside_the_Carton = dto.CARTON_INSIDE_QUANTITY ?? article.No_of_Cones_inside_the_Carton;
-            }
+            label.UPDATED_AT = DateTime.Now; 
 
             await _context.SaveChangesAsync();
             return label;

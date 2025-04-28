@@ -4,14 +4,9 @@ using System.Text;
 using Backend.Entities;
 using Microsoft.IdentityModel.Tokens;
 
-public class AuthService
+public class AuthService(IConfiguration config)
 {
-    private readonly IConfiguration _config;
-
-    public AuthService(IConfiguration config)
-    {
-        _config = config;
-    }
+    private readonly IConfiguration _config = config;
 
     public string GenerateJwtToken(UserEntity user)
     {

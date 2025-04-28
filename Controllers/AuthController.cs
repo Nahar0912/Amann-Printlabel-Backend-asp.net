@@ -5,6 +5,7 @@ using Backend.DTOs;
 
 [Route("auth")]
 [ApiController]
+
 public class AuthController : ControllerBase
 {
     private readonly AuthService _authService;

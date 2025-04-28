@@ -16,15 +16,14 @@ namespace Backend.Entities
         [MaxLength(200)]
         public required string Email { get; set; }
 
-        [Required,JsonIgnore, MaxLength(200)]
+        [JsonIgnore, MaxLength(200)]
         public string PasswordHash { get; set; }
 
         [Required, MaxLength(200)]
         public string? Role { get; set; }
-        [JsonIgnore]
+
         public DateTime Created { get; set; } = DateTime.Now;
 
-        [JsonIgnore]
         public DateTime Modified { get; set; } = DateTime.Now;
 
         public bool? isActive { get; set; }
