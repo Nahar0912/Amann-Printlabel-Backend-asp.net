@@ -16,11 +16,15 @@ namespace Backend.Controllers
         [HttpPost("add")]
         public async Task<ActionResult<LabelEntity>> Create([FromBody] LabelDto labelDto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var label = await _labelService.CreateLabelAsync(labelDto);
-            return Ok(label);
+            try
+            {
+                var label = await _labelService.CreateLabelAsync(labelDto);
+                return Ok(label);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         // Get all labels

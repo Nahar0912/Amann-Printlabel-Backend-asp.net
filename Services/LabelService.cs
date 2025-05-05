@@ -12,11 +12,14 @@ namespace Backend.Services
         // Create label
         public async Task<LabelEntity> CreateLabelAsync(LabelDto dto)
         {
+            // Check for duplicate
+            bool exists = await _context.Labels.AnyAsync(l => l.BAR_CODE == dto.BAR_CODE && l.ORDER_QUANTITY == dto.ORDER_QUANTITY);
+
+            if (exists)
+                throw new InvalidOperationException("This barcode with the same quantity already exists.");
+
             // Split the barcode
-            string[] parts = dto.BAR_CODE?.Split('-') ?? Array.Empty<string>();
-            // Optional: Validate BAR_CODE length
-            if (dto.BAR_CODE?.Length > 32)
-                throw new ArgumentException("BAR_CODE must not exceed 32 characters.");
+            string[] parts = dto.BAR_CODE?.Split('-') ?? [];
 
             string articleNo = parts.Length > 0 ? parts[0] : "UNKNOWN";
             string colorCode = parts.Length > 1 ? parts[1] : "UNKNOWN";

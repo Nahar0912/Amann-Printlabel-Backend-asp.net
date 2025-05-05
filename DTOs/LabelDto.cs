@@ -4,10 +4,13 @@ namespace Backend.DTOs
 {
     public class LabelDto
     {
-        [Required]
+        [Required(ErrorMessage = "BAR_CODE is required.")]
+        [MaxLength(32, ErrorMessage = "BAR_CODE must not exceed 32 characters.")]
         public required string BAR_CODE { get; set; }
-        [Required]
+
+        [Required(ErrorMessage = "ORDER_QUANTITY is required.")]
         public required string ORDER_QUANTITY { get; set; }
+
         public string? BATCH_LOT_NO { get; set; }
         public string? COLOR_CODE { get; set; }
         public string? ARTICLE_NO { get; set; }

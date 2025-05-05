@@ -24,22 +24,14 @@ namespace Backend.Services
         // Get a user by ID
         public async Task<UserEntity> FindOneByIdAsync(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-            {
-                throw new NotFoundException($"User with ID {id} not found");
-            }
+            var user = await _context.Users.FindAsync(id) ?? throw new KeyNotFoundException($"User with ID {id} not found");
             return user;
         }
 
         // Find a user by email (used for login)
         public async Task<UserEntity> FindByEmailAsync(string email)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null)
-            {
-                throw new NotFoundException("User not found");
-            }
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email) ?? throw new KeyNotFoundException("User not found");
             return user;
         }
 
@@ -102,10 +94,5 @@ namespace Backend.Services
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
         }
-    }
-
-    // Custom exception class for "Not Found"
-    public class NotFoundException(string message) : Exception(message)
-    {
     }
 }
